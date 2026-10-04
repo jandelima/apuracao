@@ -47,9 +47,10 @@
   .cand .pct { font-size: 48px; line-height: 1.05; font-weight: 800; }
   .cand .vt { font-size: 15px; color: var(--muted); }
   .f .pct { color: var(--flavio); } .l .pct { color: var(--lula); }
-  .split { position: relative; display: flex; height: 16px; border-radius: 8px; overflow: hidden; background: var(--track); margin-top: 20px; }
-  .split div { transition: width .8s ease; }
-  .split .mid { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: var(--card); }
+  .split { position: relative; display: flex; justify-content: space-between; height: 16px; border-radius: 8px; background: var(--track); margin-top: 20px; }
+  .split div { width: 0; transition: width .8s ease; }
+  #fb { border-radius: 8px 0 0 8px; } #lb { border-radius: 0 8px 8px 0; }
+  .split .mid { position: absolute; left: 50%; top: -5px; bottom: -5px; width: 2px; margin-left: -1px; border-radius: 1px; background: var(--text); opacity: .7; }
   .diff { text-align: center; margin-top: 12px; font-size: 17px; }
   .diff b { font-size: 20px; }
   .verdict { margin-top: 14px; padding: 12px 16px; border-radius: 10px; background: var(--track); font-weight: 600; text-align: center; }
@@ -76,7 +77,7 @@
   .rg .pc { grid-area: pc; font-size: 20px; font-weight: 800; text-align: right; }
   .rg .who { grid-area: who; margin: 0; }
   .who { margin-top: 8px; font-size: 15px; }
-  .who .fl { color: var(--flavio); font-weight: 600; } .who .lu { color: var(--lula); font-weight: 600; }
+  .fl { color: var(--flavio); font-weight: 600; } .lu { color: var(--lula); font-weight: 600; }
   .who .x { color: var(--muted); }
 
   /* Estados */
@@ -100,7 +101,9 @@
   .list { columns: 2 260px; column-gap: 32px; }
   .reg { break-inside: avoid; margin-bottom: 8px; }
   .reg h3 { font-size: 14px; color: var(--muted); margin: 6px 0 2px; font-weight: 600; }
-  .uf { break-inside: avoid; display: grid; grid-template-columns: 34px 1fr 66px; align-items: center; gap: 12px; padding: 7px 0; }
+  .uf { break-inside: avoid; display: grid; grid-template-columns: 30px minmax(0, 1fr) 54px 78px; align-items: center; gap: 10px; padding: 7px 0; }
+  .uf .vs { text-align: right; white-space: nowrap; }
+  .key { font-size: 14px; color: var(--muted); margin: -6px 0 12px; }
   .uf .sg { font-weight: 700; }
   .uf .pc { text-align: right; }
   .uf.done .pc { color: var(--prog); font-weight: 700; }
@@ -155,7 +158,7 @@
         <div><div class="nm">Lula</div><div class="pct num" id="lp">—</div><div class="vt num" id="lv"></div></div>
       </div>
     </div>
-    <div class="split"><div id="fb" style="background:var(--flavio);width:50%"></div><div id="lb" style="background:var(--lula);width:50%"></div><span class="mid"></span></div>
+    <div class="split" title="Cada barra mostra a % dos votos válidos. A marca no meio é 50%."><div id="fb" style="background:var(--flavio)"></div><div id="lb" style="background:var(--lula)"></div><span class="mid"></span></div>
     <div class="diff num" id="diff">&nbsp;</div>
     <div class="verdict" id="verdict">Carregando…</div>
     <div class="brasil">
@@ -193,6 +196,7 @@
           <button data-k="pct">% apurado</button>
         </div>
       </div>
+      <div class="key">Barra = seções apuradas · <span class="fl">Flávio</span> e <span class="lu">Lula</span> = % dos votos</div>
       <div class="list" id="list"></div>
     </div>
   </div>
@@ -253,7 +257,7 @@ for (const s of UFS) {
   s.row = document.createElement("div");
   s.row.className = "uf";
   s.row.title = s.nome;
-  s.row.innerHTML = `<span class="sg">${s.uf.toUpperCase()}</span><div class="bar"><div></div></div><span class="pc num">—</span>`;
+  s.row.innerHTML = `<span class="sg">${s.uf.toUpperCase()}</span><div class="bar"><div></div></div><span class="pc num">—</span><span class="vs num"></span>`;
 }
 
 let order = "nome";
@@ -329,15 +333,15 @@ function nacional(br) {
 function updateBrasil(nat) {
   const all = nat.all;
   const f = all.find(c => c.n === FLAVIO), l = all.find(c => c.n === LULA);
-  const fv = f.vap, lv = l.vap, tot = fv + lv || 1;
+  const fv = f.vap, lv = l.vap;
 
   if (!$("fph").src) { $("fph").src = foto(f.sqcand); $("lph").src = foto(l.sqcand); }
   set($("fp"), pct2(f.p) + "%");
   set($("lp"), pct2(l.p) + "%");
   set($("fv"), fmt(fv) + " votos");
   set($("lv"), fmt(lv) + " votos");
-  $("fb").style.width = (fv / tot * 100) + "%";
-  $("lb").style.width = (lv / tot * 100) + "%";
+  $("fb").style.width = f.p + "%";
+  $("lb").style.width = l.p + "%";
 
   // Diferença de votos entre os dois
   const d = Math.abs(fv - lv);
@@ -388,6 +392,8 @@ function updateUF(s, d) {
   bar.style.width = s.pct + "%";
   bar.style.background = col;
   set(s.row.querySelector(".pc"), pct1(s.pct) + "%");
+  setHTML(s.row.querySelector(".vs"), lead
+    ? `<span class="fl">${Math.round(num(f.pvap))}%</span> <span class="lu">${Math.round(num(l.pvap))}%</span>` : "");
   s.row.classList.toggle("done", s.pct >= 100);
   s.row.title = info;
 
