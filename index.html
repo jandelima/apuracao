@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Apuração 2026</title>
+<style>
+  :root {
+    --bg: #0f1115; --card: #181b22; --line: #2a2f3a; --text: #e8eaf0; --muted: #8b93a5;
+    --flavio: #2f6fdb; --lula: #d93a3a; --prog: #3fb67a; --track: #262a33;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+  .sub b { color: var(--text); font-weight: 600; }
+  .err { color: #ff8a8a; }
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+  .duel { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 10px; }
+  .cand .nm { font-size: 14px; color: var(--muted); }
+  .cand .pct { font-size: 34px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .cand .vt { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .cand.r { text-align: right; }
+  .f .pct { color: var(--flavio); } .l .pct { color: var(--lula); }
+  .split { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--track); }
+  .split div { transition: width .6s; }
+  .natprog { margin-top: 16px; font-size: 13px; color: var(--muted); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 8px 28px; }
+  .uf { display: grid; grid-template-columns: 34px 1fr 62px; align-items: center; gap: 10px; padding: 6px 0; }
+  .uf .sg { font-weight: 700; }
+  .uf .pc { text-align: right; font-variant-numeric: tabular-nums; }
+  .bar { height: 10px; border-radius: 5px; background: var(--track); overflow: hidden; }
+  .bar div { height: 100%; background: var(--prog); width: 0; transition: width .6s; }
+  .uf.done .pc { color: var(--prog); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Apuração Presidente 2026 · 1º turno</h1>
+  <div class="sub">Dados do TSE: <b id="tse">—</b> · próxima atualização em <b id="cd">—</b>s <span id="err" class="err"></span></div>
+
+  <div class="card">
+    <div class="duel">
+      <div class="cand f"><div class="nm">Flávio Bolsonaro</div><div class="pct" id="fp">—</div><div class="vt" id="fv"></div></div>
+      <div class="cand l r"><div class="nm">Lula</div><div class="pct" id="lp">—</div><div class="vt" id="lv"></div></div>
+    </div>
+    <div class="split"><div id="fb" style="background:var(--flavio);width:50%"></div><div id="lb" style="background:var(--lula);width:50%"></div></div>
+    <div class="natprog">Brasil: <b id="np">—</b> das seções apuradas · % sobre votos válidos</div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+</main>
+
+<script>
+const BASE = "https://resultados.tse.jus.br/oficial/ele2026/6257/dados";
+const INTERVAL = 30;
+const UFS = ["ac","al","ap","am","ba","ce","df","es","go","ma","mt","ms","mg","pa",
+             "pb","pr","pe","pi","rj","rn","rs","ro","rr","sc","sp","se","to"];
+
+const $ = id => document.getElementById(id);
+const num = s => parseFloat(String(s).replace(",", "."));
+const fmt = n => n.toLocaleString("pt-BR");
+
+const grid = $("grid");
+for (const uf of UFS) {
+  grid.insertAdjacentHTML("beforeend",
+    `<div class="uf" id="r-${uf}"><span class="sg">${uf.toUpperCase()}</span>` +
+    `<div class="bar"><div></div></div><span class="pc">—</span></div>`);
+}
+
+async function get(abr) {
+  const r = await fetch(`${BASE}/${abr}/${abr}-c0001-e006257-u.json`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`${abr.toUpperCase()}: HTTP ${r.status}`);
+  return r.json();
+}
+
+function cand(d, n) {
+  for (const a of d.carg[0].agr)
+    for (const p of a.par)
+      for (const c of p.cand) if (c.n === n) return c;
+}
+
+async function update() {
+  const errs = [];
+
+  try {
+    const br = await get("br");
+    const f = cand(br, "22"), l = cand(br, "13");
+    const fv = +f.vap, lv = +l.vap, tot = fv + lv || 1;
+    $("fp").textContent = f.pvap + "%";
+    $("lp").textContent = l.pvap + "%";
+    $("fv").textContent = fmt(fv) + " votos";
+    $("lv").textContent = fmt(lv) + " votos";
+    $("fb").style.width = (fv / tot * 100) + "%";
+    $("lb").style.width = (lv / tot * 100) + "%";
+    $("np").textContent = br.s.pst + "%";
+    $("tse").textContent = `${br.dg} ${br.hg}`;
+  } catch (e) { errs.push(e.message); }
+
+  await Promise.all(UFS.map(async uf => {
+    try {
+      const d = await get(uf);
+      const p = num(d.s.pst);
+      const row = $("r-" + uf);
+      row.querySelector(".bar div").style.width = p + "%";
+      row.querySelector(".pc").textContent = d.s.pst + "%";
+      row.classList.toggle("done", p >= 100);
+    } catch (e) { errs.push(e.message); }
+  }));
+
+  $("err").textContent = errs.length ? "· erro: " + errs.join(", ") : "";
+}
+
+let left = 0;
+setInterval(() => {
+  if (--left <= 0) { left = INTERVAL; update(); }
+  $("cd").textContent = left;
+}, 1000);
+left = INTERVAL; update(); $("cd").textContent = left;
+</script>
+</body>
+</html>
