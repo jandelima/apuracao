@@ -61,6 +61,11 @@
 
   .bar { height: 12px; border-radius: 6px; background: var(--track); overflow: hidden; }
   .bar div { height: 100%; width: 0; background: var(--prog); transition: width .8s ease, background .8s; }
+  /* Barra dividida: comprimento = seções apuradas; cores = votos de Flávio, outros e Lula */
+  .bar .fill { display: flex; gap: 2px; background: none; }
+  .fill i { height: 100%; width: 0; transition: width .8s ease; }
+  .fill .f { background: var(--flavio); } .fill .o { background: var(--other); } .fill .l { background: var(--lula); }
+  .ot { color: var(--other); font-weight: 600; }
 
   /* Outros candidatos */
   .others { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px 32px; }
@@ -101,8 +106,7 @@
   .list { columns: 2 260px; column-gap: 32px; }
   .reg { break-inside: avoid; margin-bottom: 8px; }
   .reg h3 { font-size: 14px; color: var(--muted); margin: 6px 0 2px; font-weight: 600; }
-  .uf { break-inside: avoid; display: grid; grid-template-columns: 30px minmax(0, 1fr) 54px 78px; align-items: center; gap: 10px; padding: 7px 0; }
-  .uf .vs { text-align: right; white-space: nowrap; }
+  .uf { break-inside: avoid; display: grid; grid-template-columns: 30px minmax(0, 1fr) 60px; align-items: center; gap: 12px; padding: 7px 0; }
   .key { font-size: 14px; color: var(--muted); margin: -6px 0 12px; }
   .uf .sg { font-weight: 700; }
   .uf .pc { text-align: right; }
@@ -196,7 +200,7 @@
           <button data-k="pct">% apurado</button>
         </div>
       </div>
-      <div class="key">Barra = seções apuradas · <span class="fl">Flávio</span> e <span class="lu">Lula</span> = % dos votos</div>
+      <div class="key">Tamanho da barra = seções apuradas · cores = votos de <span class="fl">Flávio</span>, <span class="ot">outros</span> e <span class="lu">Lula</span></div>
       <div class="list" id="list"></div>
     </div>
   </div>
@@ -232,6 +236,17 @@ const foto = sq => `${BASE}/fotos/br/${sq}.jpeg`;
 const colorOf = n => n === FLAVIO ? "var(--flavio)" : n === LULA ? "var(--lula)" : "var(--other)";
 const versus = (f, l) => `<span class="fl">Flávio ${pct1(f)}%</span> <span class="x">×</span> <span class="lu">Lula ${pct1(l)}%</span>`;
 
+// Barra de estado/região: largura total = % apurado, dividida em Flávio | outros | Lula
+const FILL = `<div class="bar"><div class="fill"><i class="f"></i><i class="o"></i><i class="l"></i></div></div>`;
+function setFill(el, apurado, fp, lp) {
+  const fill = el.querySelector(".fill");
+  const [f, o, l] = fill.children;
+  fill.style.width = apurado + "%";
+  f.style.width = fp + "%";
+  l.style.width = lp + "%";
+  o.style.width = Math.max(0, 100 - fp - lp) + "%";
+}
+
 // Troca o texto e pisca se o valor mudou
 function set(el, text) {
   if (el.textContent === text) return;
@@ -257,7 +272,7 @@ for (const s of UFS) {
   s.row = document.createElement("div");
   s.row.className = "uf";
   s.row.title = s.nome;
-  s.row.innerHTML = `<span class="sg">${s.uf.toUpperCase()}</span><div class="bar"><div></div></div><span class="pc num">—</span><span class="vs num"></span>`;
+  s.row.innerHTML = `<span class="sg">${s.uf.toUpperCase()}</span>${FILL}<span class="pc num">—</span>`;
 }
 
 let order = "nome";
@@ -388,12 +403,8 @@ function updateUF(s, d) {
   const f = all.find(c => c.n === FLAVIO), l = all.find(c => c.n === LULA);
   const info = `${s.nome}: ${d.s.pst}% apurado` + (lead ? ` · Flávio ${f.pvap}% × Lula ${l.pvap}%` : "");
 
-  const bar = s.row.querySelector(".bar div");
-  bar.style.width = s.pct + "%";
-  bar.style.background = col;
+  setFill(s.row, s.pct, lead ? num(f.pvap) : 0, lead ? num(l.pvap) : 0);
   set(s.row.querySelector(".pc"), pct1(s.pct) + "%");
-  setHTML(s.row.querySelector(".vs"), lead
-    ? `<span class="fl">${Math.round(num(f.pvap))}%</span> <span class="lu">${Math.round(num(l.pvap))}%</span>` : "");
   s.row.classList.toggle("done", s.pct >= 100);
   s.row.title = info;
 
@@ -415,7 +426,7 @@ function updateRegioes() {
   const box = $("regs");
   if (!box.children.length) {
     box.innerHTML = REGIOES.map(r =>
-      `<div class="rg"><span class="nm">${r}</span><div class="bar"><div></div></div>` +
+      `<div class="rg"><span class="nm">${r}</span>${FILL}` +
       `<span class="pc num">—</span><div class="who num">&nbsp;</div></div>`).join("");
   }
   REGIOES.forEach((r, i) => {
@@ -432,9 +443,7 @@ function updateRegioes() {
     const hasVotes = vv > 0 && votos[lead] > 0;
 
     const el = box.children[i];
-    const bar = el.querySelector(".bar div");
-    bar.style.width = p + "%";
-    bar.style.background = hasVotes ? colorOf(lead) : "var(--track)";
+    setFill(el, p, hasVotes ? (votos[FLAVIO] || 0) / vv * 100 : 0, hasVotes ? (votos[LULA] || 0) / vv * 100 : 0);
     set(el.querySelector(".pc"), pct2(p) + "%");
     el.title = `${fmt(st)} de ${fmt(ts)} seções apuradas`;
     setHTML(el.querySelector(".who"), hasVotes
