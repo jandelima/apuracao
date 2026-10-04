@@ -215,6 +215,7 @@ const UFS = [
   ["rs","Rio Grande do Sul","Sul",2,7],
 ].map(([uf, nome, regiao, x, y]) => ({ uf, nome, regiao, x, y, pct: 0 }));
 const REGIOES = ["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul"];
+const EXTERIOR = { uf: "zz", d: null };   // votos do exterior: entram só no total do Brasil
 
 const $ = id => document.getElementById(id);
 const num = s => parseFloat(String(s).replace(",", "."));
@@ -298,14 +299,41 @@ function cands(d) {
   return out.sort((a, b) => +b.vap - +a.vap);
 }
 
-function updateBrasil(br) {
-  const all = cands(br);
+// O TSE atualiza o arquivo do Brasil só a cada 5–20 min, mas os dos estados a cada ~1 min.
+// Por isso o total nacional é a soma dos 27 estados + exterior (dá o mesmo total de seções
+// do arquivo oficial, só que mais fresco). Se faltar algum estado, usa o arquivo do Brasil.
+const stamp = d => d.dg.split("/").reverse().join("") + d.hg;
+function nacional(br) {
+  const files = [...UFS.map(s => s.d), EXTERIOR.d];
+  const base = br || files.find(Boolean);
+  if (!base) return null;
+  const eleito = br ? cands(br).find(c => c.e === "s") : null;
+  const newest = [br, ...files].filter(Boolean).reduce((a, b) => stamp(b) > stamp(a) ? b : a);
+  const hora = newest.hg;
+
+  if (files.every(Boolean)) {
+    let st = 0, ts = 0, vv = 0;
+    const votos = {};
+    for (const d of files) {
+      st += +d.s.st; ts += +d.s.ts; vv += +d.v.vv;
+      for (const c of cands(d)) votos[c.n] = (votos[c.n] || 0) + +c.vap;
+    }
+    const all = cands(base).map(c => ({ ...c, vap: votos[c.n] || 0, p: vv ? (votos[c.n] || 0) / vv * 100 : 0 }))
+                           .sort((a, b) => b.vap - a.vap);
+    return { all, pst: ts ? st / ts * 100 : 0, eleito, hora };
+  }
+  if (!br) return null;
+  return { all: cands(br).map(c => ({ ...c, vap: +c.vap, p: num(c.pvap) })), pst: num(br.s.pst), eleito, hora };
+}
+
+function updateBrasil(nat) {
+  const all = nat.all;
   const f = all.find(c => c.n === FLAVIO), l = all.find(c => c.n === LULA);
-  const fv = +f.vap, lv = +l.vap, tot = fv + lv || 1;
+  const fv = f.vap, lv = l.vap, tot = fv + lv || 1;
 
   if (!$("fph").src) { $("fph").src = foto(f.sqcand); $("lph").src = foto(l.sqcand); }
-  set($("fp"), f.pvap + "%");
-  set($("lp"), l.pvap + "%");
+  set($("fp"), pct2(f.p) + "%");
+  set($("lp"), pct2(l.p) + "%");
   set($("fv"), fmt(fv) + " votos");
   set($("lv"), fmt(lv) + " votos");
   $("fb").style.width = (fv / tot * 100) + "%";
@@ -316,17 +344,17 @@ function updateBrasil(br) {
   setHTML($("diff"), fv === lv ? "Empate"
     : `${fv > lv ? "Flávio" : "Lula"} está <b>${fmt(d)} votos</b> à frente`);
 
-  set($("np"), br.s.pst + "%");
-  $("nb").style.width = num(br.s.pst) + "%";
-  set($("tse"), br.hg.slice(0, 5));
+  set($("np"), pct2(nat.pst) + "%");
+  $("nb").style.width = nat.pst + "%";
+  set($("tse"), nat.hora);
 
   // Situação: eleito / 1º turno / 2º turno
   const v = $("verdict");
-  const eleito = all.find(c => c.e === "s");
+  const eleito = nat.eleito;
   const [a, b] = all;
   let msg;
   if (eleito) msg = `🏆 ${nome(eleito)} está eleito presidente`;
-  else if (num(a.pvap) > 50) msg = `Se a apuração parasse agora, ${nome(a)} venceria no 1º turno`;
+  else if (a.p > 50) msg =`Se a apuração parasse agora, ${nome(a)} venceria no 1º turno`;
   else msg = `Se a apuração parasse agora, haveria 2º turno entre ${nome(a)} e ${nome(b)}`;
   set(v, msg);
   v.classList.toggle("win", !!eleito);
@@ -342,8 +370,8 @@ function updateBrasil(br) {
     const img = el.querySelector("img");
     if (img.getAttribute("src") !== foto(c.sqcand)) img.src = foto(c.sqcand);
     el.querySelector(".n").textContent = nome(c);
-    el.title = `${nome(c)} · ${fmt(+c.vap)} votos`;
-    set(el.querySelector(".p"), c.pvap + "%");
+    el.title = `${nome(c)} · ${fmt(c.vap)} votos`;
+    set(el.querySelector(".p"), pct2(c.p) + "%");
   });
 }
 
@@ -411,12 +439,17 @@ function updateRegioes() {
 
 async function update() {
   const errs = [];
-  try { updateBrasil(await get("br")); } catch (e) { errs.push(e.message); }
+  let br = null;
+  await Promise.all([
+    get("br").then(d => { br = d; }, e => errs.push(e.message)),
+    get("zz").then(d => { EXTERIOR.d = d; }, e => errs.push(e.message)),
+    ...UFS.map(async s => {
+      try { updateUF(s, await get(s.uf)); } catch (e) { errs.push(e.message); }
+    }),
+  ]);
 
-  await Promise.all(UFS.map(async s => {
-    try { updateUF(s, await get(s.uf)); } catch (e) { errs.push(e.message); }
-  }));
-
+  const nat = nacional(br);
+  if (nat) updateBrasil(nat);
   set($("done"), String(UFS.filter(s => s.pct >= 100).length));
   updateRegioes();
   if (order === "pct") renderList();
