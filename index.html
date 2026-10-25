@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Apuração 2026</title>
+<title>Apuração 2026 · 2º turno</title>
 <style>
   :root {
     --bg: #f4f5f8; --card: #ffffff; --line: #e2e5ec; --text: #161a22; --muted: #646c7d;
@@ -15,6 +15,28 @@
       --bg: #0f1115; --card: #181b22; --line: #2a2f3a; --text: #e8eaf0; --muted: #8b93a5;
       --flavio: #4a86ec; --lula: #ef5350; --other: #6d7381; --prog: #3fb67a;
       --track: #262a33; --empty: #232730; --flash: rgba(255, 200, 0, .22);
+    }
+  }
+  /* Temas de torcida (22 e 13): fundo com símbolos, topo com emblema e número gigante ao fundo.
+     As cores dos candidatos nos números, barras e mapa ficam iguais em todos os temas. */
+  :root[data-tema="bolso"] {
+    --line: #d2e2c6; --track: #e2ebd9; --marca: "22";
+    --hd: #ffdf00; --hd-text: #002776; --hd-sub: #00752d; --hd-line: #002776; --friso: #ffdf00;
+    --arte: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><polygon points='16.0,52 48,29.6 80.0,52 48,74.4' fill='%23ffdf00' fill-opacity='0.22'/><circle cx='48' cy='52' r='13.4' fill='%23002776' fill-opacity='0.35'/><polygon points='115.0,132 138,115.9 161.0,132 138,148.1' fill='%23ffdf00' fill-opacity='0.22'/><circle cx='138' cy='132' r='9.7' fill='%23002776' fill-opacity='0.35'/><g fill='%23fff' fill-opacity='0.55'><polygon points='150.0,31.0 150.9,33.8 153.8,33.8 151.5,35.5 152.4,38.2 150.0,36.5 147.6,38.2 148.5,35.5 146.2,33.8 149.1,33.8'/><polygon points='30.9,146.6 31.0,149.2 33.5,149.8 31.1,150.7 31.3,153.3 29.7,151.3 27.3,152.2 28.7,150.1 27.1,148.1 29.5,148.8'/><polygon points='100.0,92.0 100.7,94.1 102.9,94.1 101.1,95.4 101.8,97.4 100.0,96.1 98.2,97.4 98.9,95.4 97.1,94.1 99.3,94.1'/><polygon points='170.4,162.5 170.7,164.3 172.5,164.7 170.8,165.4 171.1,167.2 169.8,165.9 168.2,166.7 169.1,165.1 167.8,163.8 169.6,164.1'/><polygon points='15.0,77.5 15.6,79.2 17.4,79.2 15.9,80.3 16.5,82.0 15.0,81.0 13.5,82.0 14.1,80.3 12.6,79.2 14.4,79.2'/></g></svg>"), linear-gradient(160deg, #00a83f, #00692a);
+  }
+  :root[data-tema="pt"] {
+    --line: #f0d2d2; --track: #f1e2e2; --marca: "13";
+    --hd: #ffffff; --hd-text: #c4161c; --hd-sub: #8e0f14; --hd-line: #8e0f14; --friso: #8e0f14;
+    --arte: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><g fill='%23fff' fill-opacity='0.12'><polygon points='30.0,20.0 33.4,30.4 44.3,30.4 35.4,36.8 38.8,47.1 30.0,40.7 21.2,47.1 24.6,36.8 15.7,30.4 26.6,30.4'/><polygon points='114.7,16.5 114.5,22.3 120.0,24.3 114.4,25.9 114.2,31.7 111.0,26.9 105.4,28.5 108.9,23.9 105.7,19.1 111.2,21.1'/><polygon points='77.4,70.5 85.4,84.3 101.1,81.0 90.4,92.9 98.3,106.7 83.7,100.2 73.1,112.1 74.7,96.2 60.1,89.7 75.8,86.4'/><polygon points='22.3,119.3 22.7,125.8 29.0,127.5 22.9,129.9 23.2,136.4 19.1,131.3 13.0,133.7 16.6,128.2 12.5,123.1 18.8,124.8'/><polygon points='141.8,109.1 143.4,118.4 152.8,119.7 144.5,124.2 146.1,133.5 139.3,126.9 131.0,131.4 135.1,122.9 128.3,116.3 137.7,117.6'/><polygon points='138.0,63.0 139.1,66.5 142.8,66.5 139.8,68.6 140.9,72.0 138.0,69.9 135.1,72.0 136.2,68.6 133.2,66.5 136.9,66.5'/><polygon points='55.9,144.4 58.6,147.8 62.7,146.3 60.3,149.9 63.0,153.4 58.8,152.2 56.3,155.8 56.2,151.4 52.0,150.2 56.1,148.7'/></g></svg>"), linear-gradient(160deg, #d01b22, #8a0d13);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root[data-tema="bolso"]:not([data-theme="light"]) {
+      --card: #121d15; --line: #22362a; --track: #1d2b21;
+      --arte: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><polygon points='16.0,52 48,29.6 80.0,52 48,74.4' fill='%23ffdf00' fill-opacity='0.14'/><circle cx='48' cy='52' r='13.4' fill='%23002776' fill-opacity='0.22'/><polygon points='115.0,132 138,115.9 161.0,132 138,148.1' fill='%23ffdf00' fill-opacity='0.14'/><circle cx='138' cy='132' r='9.7' fill='%23002776' fill-opacity='0.22'/><g fill='%23fff' fill-opacity='0.35'><polygon points='150.0,31.0 150.9,33.8 153.8,33.8 151.5,35.5 152.4,38.2 150.0,36.5 147.6,38.2 148.5,35.5 146.2,33.8 149.1,33.8'/><polygon points='30.9,146.6 31.0,149.2 33.5,149.8 31.1,150.7 31.3,153.3 29.7,151.3 27.3,152.2 28.7,150.1 27.1,148.1 29.5,148.8'/><polygon points='100.0,92.0 100.7,94.1 102.9,94.1 101.1,95.4 101.8,97.4 100.0,96.1 98.2,97.4 98.9,95.4 97.1,94.1 99.3,94.1'/><polygon points='170.4,162.5 170.7,164.3 172.5,164.7 170.8,165.4 171.1,167.2 169.8,165.9 168.2,166.7 169.1,165.1 167.8,163.8 169.6,164.1'/><polygon points='15.0,77.5 15.6,79.2 17.4,79.2 15.9,80.3 16.5,82.0 15.0,81.0 13.5,82.0 14.1,80.3 12.6,79.2 14.4,79.2'/></g></svg>"), linear-gradient(160deg, #00491d, #001c0b);
+    }
+    :root[data-tema="pt"]:not([data-theme="light"]) {
+      --card: #201416; --line: #3b2326; --track: #2d1d1f;
+      --arte: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><g fill='%23fff' fill-opacity='0.08'><polygon points='30.0,20.0 33.4,30.4 44.3,30.4 35.4,36.8 38.8,47.1 30.0,40.7 21.2,47.1 24.6,36.8 15.7,30.4 26.6,30.4'/><polygon points='114.7,16.5 114.5,22.3 120.0,24.3 114.4,25.9 114.2,31.7 111.0,26.9 105.4,28.5 108.9,23.9 105.7,19.1 111.2,21.1'/><polygon points='77.4,70.5 85.4,84.3 101.1,81.0 90.4,92.9 98.3,106.7 83.7,100.2 73.1,112.1 74.7,96.2 60.1,89.7 75.8,86.4'/><polygon points='22.3,119.3 22.7,125.8 29.0,127.5 22.9,129.9 23.2,136.4 19.1,131.3 13.0,133.7 16.6,128.2 12.5,123.1 18.8,124.8'/><polygon points='141.8,109.1 143.4,118.4 152.8,119.7 144.5,124.2 146.1,133.5 139.3,126.9 131.0,131.4 135.1,122.9 128.3,116.3 137.7,117.6'/><polygon points='138.0,63.0 139.1,66.5 142.8,66.5 139.8,68.6 140.9,72.0 138.0,69.9 135.1,72.0 136.2,68.6 133.2,66.5 136.9,66.5'/><polygon points='55.9,144.4 58.6,147.8 62.7,146.3 60.3,149.9 63.0,153.4 58.8,152.2 56.3,155.8 56.2,151.4 52.0,150.2 56.1,148.7'/></g></svg>"), linear-gradient(160deg, #6a0b10, #240406);
     }
   }
   * { box-sizing: border-box; }
@@ -32,6 +54,36 @@
   .live.off i { background: var(--lula); animation: none; }
   @keyframes pulse { 50% { opacity: .3; } }
   .live b { color: var(--text); }
+  .top-r { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .lema { font-size: 15px; font-weight: 600; margin-top: 2px; }
+  .lema:empty { display: none; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .emb { display: none; flex: none; }
+  [data-tema="bolso"] .emb.b, [data-tema="pt"] .emb.p { display: block; }
+  .emb.b { width: 62px; height: 43px; border-radius: 4px; }
+  .emb.p { width: 58px; height: 58px; margin: -6px 0; }
+
+  /* Seletor de tema: botões 22 e 13 com as cores de cada lado */
+  #temas { gap: 8px; }
+  #temas button { font-weight: 700; }
+  #temas .n22, #temas .n13 { font-size: 17px; font-weight: 900; min-width: 56px; letter-spacing: .02em; }
+  #temas .n22 { background: #009c3b; border-color: #009c3b; color: #ffdf00; }
+  #temas .n13 { background: #c4161c; border-color: #c4161c; color: #fff; }
+  #temas button.on { outline: 3px solid var(--text); outline-offset: 2px; }
+  /* Quem escolheu um lado não vê o número do outro; para trocar, volta ao Neutro */
+  [data-tema="pt"] #temas .n22, [data-tema="bolso"] #temas .n13 { display: none; }
+
+  [data-tema] body { background: var(--arte); min-height: 100vh; }
+  [data-tema] body::after { content: var(--marca); position: fixed; right: -.04em; bottom: -.22em; z-index: 0; pointer-events: none;
+                            font-size: min(48vw, 560px); font-weight: 900; line-height: 1; letter-spacing: -.05em; color: rgba(255, 255, 255, .13); }
+  [data-tema] main { position: relative; z-index: 1; }
+  [data-tema] header { background: var(--hd); color: var(--hd-text); padding: 14px 20px; border-radius: 14px;
+                       border-bottom: 5px solid var(--hd-line); box-shadow: 0 8px 24px rgba(0, 0, 0, .22); }
+  [data-tema] .lema { color: var(--hd-sub); }
+  [data-tema] .live, [data-tema] .live b { color: var(--hd-text); }
+  [data-tema] #temas button[data-t="neutro"] { color: var(--hd-text); border-color: var(--hd-text); }
+  [data-tema] #temas button.on { outline-color: var(--hd-text); }
+  [data-tema] .card { border: none; border-top: 5px solid var(--friso); box-shadow: 0 8px 24px rgba(0, 0, 0, .2); }
 
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px; margin-bottom: 18px; }
   h2 { font-size: 17px; margin: 0 0 16px; }
@@ -61,18 +113,10 @@
 
   .bar { height: 12px; border-radius: 6px; background: var(--track); overflow: hidden; }
   .bar div { height: 100%; width: 0; background: var(--prog); transition: width .8s ease, background .8s; }
-  /* Barra dividida: comprimento = seções apuradas; cores = votos de Flávio, outros e Lula */
+  /* Barra dividida: comprimento = seções apuradas; cores = votos de Flávio e Lula */
   .bar .fill { display: flex; gap: 2px; background: none; }
   .fill i { height: 100%; width: 0; transition: width .8s ease; }
-  .fill .f { background: var(--flavio); } .fill .o { background: var(--other); } .fill .l { background: var(--lula); }
-  .ot { color: var(--other); font-weight: 600; }
-
-  /* Outros candidatos */
-  .others { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px 32px; }
-  .oc { display: flex; align-items: center; gap: 12px; }
-  .oc img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; object-position: top; background: var(--track); flex: none; }
-  .oc .n { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .oc .p { font-weight: 700; }
+  .fill .f { background: var(--flavio); } .fill .l { background: var(--lula); }
 
   /* Regiões */
   .rg { display: grid; grid-template-columns: 120px minmax(0, 1fr) 84px 230px; grid-template-areas: "nm bar pc who";
@@ -129,6 +173,19 @@
     main { padding: 16px 12px 32px; }
     h1 { font-size: 19px; }
     header { margin-bottom: 14px; }
+
+    /* Topo compacto: título curto e horário + temas numa linha, para o placar aparecer logo */
+    .dsk { display: none; }
+    header { flex-direction: column; align-items: stretch; gap: 10px; }
+    .top-r { justify-content: space-between; flex-wrap: nowrap; gap: 10px; }
+    #temas { width: auto; }
+    #temas button { flex: none; min-height: 40px; padding: 8px 12px; }
+    #temas .n22, #temas .n13 { min-width: 48px; }
+    [data-tema] header { padding: 12px 14px; }
+    .brand { gap: 10px; }
+    .emb.b { width: 44px; height: 31px; }
+    .emb.p { width: 42px; height: 42px; margin: -4px 0; }
+    .lema { font-size: 13px; }
     .card { padding: 16px; border-radius: 12px; margin-bottom: 14px; }
 
     .duel { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -142,8 +199,6 @@
     .diff b { font-size: 18px; }
     .verdict { font-size: 15px; padding: 10px 12px; }
 
-    .others { grid-template-columns: 1fr; gap: 10px; }
-
 
     .sort { width: 100%; }
     .sort button { flex: 1; padding: 9px 6px; }
@@ -153,8 +208,19 @@
 <body>
 <main>
   <header>
-    <h1>Apuração · Presidente 2026</h1>
-    <span class="live" id="live"><i></i>Atualizado às <b class="num" id="tse">—</b></span>
+    <div class="brand">
+      <svg class="emb b" viewBox="0 0 70 49" aria-hidden="true"><rect width="70" height="49" fill="#009c3b"/><polygon points="6,24.5 35,4.5 64,24.5 35,44.5" fill="#ffdf00"/><circle cx="35" cy="24.5" r="11.5" fill="#002776"/><path d="M23.6 22.2 Q35 18.6 46.4 26" stroke="#fff" stroke-width="2.2" fill="none"/><g fill="#fff"><circle cx="30" cy="28" r=".9"/><circle cx="35" cy="31" r="1"/><circle cx="40" cy="28.6" r=".9"/><circle cx="33" cy="26.4" r=".7"/><circle cx="38" cy="33.4" r=".7"/><circle cx="31.6" cy="32.6" r=".7"/></g></svg>
+      <svg class="emb p" viewBox="0 0 100 100" aria-hidden="true"><polygon points="50.0,5.0 60.8,38.2 95.7,38.2 67.4,58.7 78.2,91.8 50.0,71.3 21.8,91.8 32.6,58.7 4.3,38.2 39.2,38.2" fill="#c4161c"/><text x="50" y="61.5" text-anchor="middle" font-size="21" font-weight="900" fill="#fff" font-family="system-ui, sans-serif">13</text></svg>
+      <div><h1>Apuração<span class="dsk"> · Presidente 2026</span> · 2º turno</h1><div class="lema" id="lema"></div></div>
+    </div>
+    <div class="top-r">
+      <span class="live" id="live"><i></i><span class="dsk">Atualizado às</span><b class="num" id="tse">—</b></span>
+      <div class="sort" id="temas">
+        <button data-t="neutro">Neutro</button>
+        <button data-t="bolso" class="n22" title="Tema do 22">22</button>
+        <button data-t="pt" class="n13" title="Tema do 13">13</button>
+      </div>
+    </div>
   </header>
 
   <div class="card">
@@ -175,11 +241,6 @@
       <div class="top"><span>Seções apuradas no Brasil</span><b class="num" id="np">—</b></div>
       <div class="bar"><div id="nb"></div></div>
     </div>
-  </div>
-
-  <div class="card">
-    <h2>Outros candidatos</h2>
-    <div class="others" id="others"></div>
   </div>
 
   <div class="card">
@@ -207,14 +268,14 @@
           <button data-k="pct">% apurado</button>
         </div>
       </div>
-      <div class="key">Tamanho da barra = seções apuradas · cores = votos de <span class="fl">Flávio</span>, <span class="ot">outros</span> e <span class="lu">Lula</span></div>
+      <div class="key">Tamanho da barra = seções apuradas · cores = votos de <span class="fl">Flávio</span> e <span class="lu">Lula</span></div>
       <div class="list" id="list"></div>
     </div>
   </div>
 </main>
 
 <script>
-const BASE = "https://resultados.tse.jus.br/oficial/ele2026/6257";
+const BASE = "https://resultados.tse.jus.br/oficial/ele2026/6258";
 const INTERVAL = 30;
 const FLAVIO = "22", LULA = "13";
 
@@ -243,15 +304,14 @@ const foto = sq => `${BASE}/fotos/br/${sq}.jpeg`;
 const colorOf = n => n === FLAVIO ? "var(--flavio)" : n === LULA ? "var(--lula)" : "var(--other)";
 const versus = (f, l) => `<span class="fl">Flávio ${pct1(f)}%</span> <span class="x">×</span> <span class="lu">Lula ${pct1(l)}%</span>`;
 
-// Barra de estado/região: largura total = % apurado, dividida em Flávio | outros | Lula
-const FILL = `<div class="bar"><div class="fill"><i class="f"></i><i class="o"></i><i class="l"></i></div></div>`;
+// Barra de estado/região: largura total = % apurado, dividida em Flávio | Lula
+const FILL = `<div class="bar"><div class="fill"><i class="f"></i><i class="l"></i></div></div>`;
 function setFill(el, apurado, fp, lp) {
   const fill = el.querySelector(".fill");
-  const [f, o, l] = fill.children;
+  const [f, l] = fill.children;
   fill.style.width = apurado + "%";
   f.style.width = fp + "%";
   l.style.width = lp + "%";
-  o.style.width = Math.max(0, 100 - fp - lp) + "%";
 }
 
 // Estado em destaque no mapa (mouse ou toque) e linha de detalhes embaixo dele
@@ -274,6 +334,26 @@ function set(el, text) {
 function setHTML(el, html) {
   if (el.innerHTML !== html) el.innerHTML = html;
 }
+
+// Temas de torcida (só visual); a escolha fica salva no navegador
+const LEMAS = { neutro: "", bolso: "Brasil acima de tudo, Deus acima de todos", pt: "Faz o L!" };
+let tema = "neutro";
+try { tema = localStorage.getItem("tema") || "neutro"; } catch (e) {}
+if (!(tema in LEMAS)) tema = "neutro";
+function aplicaTema() {
+  if (tema === "neutro") delete document.documentElement.dataset.tema;
+  else document.documentElement.dataset.tema = tema;
+  $("lema").textContent = LEMAS[tema];
+  document.querySelectorAll("#temas button").forEach(b => b.classList.toggle("on", b.dataset.t === tema));
+}
+$("temas").addEventListener("click", e => {
+  const t = e.target.dataset?.t;
+  if (!t) return;
+  tema = t;
+  try { localStorage.setItem("tema", t); } catch (e) {}
+  aplicaTema();
+});
+aplicaTema();
 
 // Monta mapa e lista uma vez
 const map = $("map");
@@ -321,7 +401,7 @@ $("sort").addEventListener("click", e => {
 renderList();
 
 async function get(abr) {
-  const r = await fetch(`${BASE}/dados/${abr}/${abr}-c0001-e006257-u.json`, { cache: "no-store" });
+  const r = await fetch(`${BASE}/dados/${abr}/${abr}-c0001-e006258-u.json`, { cache: "no-store" });
   if (!r.ok) throw new Error(`${abr.toUpperCase()}: HTTP ${r.status}`);
   return r.json();
 }
@@ -334,9 +414,9 @@ function cands(d) {
   return out.sort((a, b) => +b.vap - +a.vap);
 }
 
-// O TSE atualiza o arquivo do Brasil só a cada 5–20 min, mas os dos estados a cada ~1 min.
-// Por isso o total nacional é a soma dos 27 estados + exterior (dá o mesmo total de seções
-// do arquivo oficial, só que mais fresco). Se faltar algum estado, usa o arquivo do Brasil.
+// O total nacional pode vir de duas fontes: o arquivo do Brasil ou a soma dos 27 estados + exterior.
+// Às vezes os estados andam na frente (o arquivo do Brasil chega a ficar 5–20 min parado),
+// às vezes o Brasil anda na frente (no começo da apuração). Usa a que tiver mais seções apuradas.
 const stamp = d => d.dg.split("/").reverse().join("") + d.hg;
 function nacional(br) {
   const files = [...UFS.map(s => s.d), EXTERIOR.d];
@@ -346,19 +426,20 @@ function nacional(br) {
   const newest = [br, ...files].filter(Boolean).reduce((a, b) => stamp(b) > stamp(a) ? b : a);
   const hora = newest.hg;
 
+  const doBrasil = br && { all: cands(br).map(c => ({ ...c, vap: +c.vap, p: num(c.pvap) })), pst: num(br.s.pst), eleito, hora, resta: +br.e.esnt };
   if (files.every(Boolean)) {
-    let st = 0, ts = 0, vv = 0;
+    let st = 0, ts = 0, vv = 0, resta = 0;
     const votos = {};
     for (const d of files) {
-      st += +d.s.st; ts += +d.s.ts; vv += +d.v.vv;
+      st += +d.s.st; ts += +d.s.ts; vv += +d.v.vv; resta += +d.e.esnt;
       for (const c of cands(d)) votos[c.n] = (votos[c.n] || 0) + +c.vap;
     }
+    if (br && +br.s.st > st) return doBrasil;
     const all = cands(base).map(c => ({ ...c, vap: votos[c.n] || 0, p: vv ? (votos[c.n] || 0) / vv * 100 : 0 }))
                            .sort((a, b) => b.vap - a.vap);
-    return { all, pst: ts ? st / ts * 100 : 0, eleito, hora };
+    return { all, pst: ts ? st / ts * 100 : 0, eleito, hora, resta };
   }
-  if (!br) return null;
-  return { all: cands(br).map(c => ({ ...c, vap: +c.vap, p: num(c.pvap) })), pst: num(br.s.pst), eleito, hora };
+  return doBrasil || null;
 }
 
 function updateBrasil(nat) {
@@ -376,38 +457,30 @@ function updateBrasil(nat) {
 
   // Diferença de votos entre os dois
   const d = Math.abs(fv - lv);
-  setHTML($("diff"), fv === lv ? "Empate"
+  setHTML($("diff"), fv + lv === 0 ? "&nbsp;" : fv === lv ? "Empate"
     : `${fv > lv ? "Flávio" : "Lula"} está <b>${fmt(d)} votos</b> à frente`);
 
   set($("np"), pct2(nat.pst) + "%");
   $("nb").style.width = nat.pst + "%";
   set($("tse"), nat.hora);
 
-  // Situação: eleito / 1º turno / 2º turno
+  // Situação: eleito pelo TSE / eleito pela matemática / quem venceria agora / aguardando votos
+  // Matemática: mesmo que todos os eleitores das seções ainda não apuradas (resta)
+  // votassem no segundo colocado, ele não alcançaria a vantagem do primeiro.
   const v = $("verdict");
-  const eleito = nat.eleito;
-  const [a, b] = all;
+  const lider = fv > lv ? f : l;
+  const decidido = fv + lv > 0 && d > nat.resta;
+  const eleito = nat.eleito || (decidido ? lider : null);
   let msg;
-  if (eleito) msg = `🏆 ${nome(eleito)} está eleito presidente`;
-  else if (a.p > 50) msg =`Se a apuração parasse agora, ${nome(a)} venceria no 1º turno`;
-  else msg = `Se a apuração parasse agora, haveria 2º turno entre ${nome(a)} e ${nome(b)}`;
+  if (nat.eleito) msg = `🏆 ${nome(eleito)} está eleito presidente`;
+  else if (decidido) msg = `🏆 ${nome(eleito)} está matematicamente eleito`;
+  else if (fv + lv === 0) msg = "Aguardando os primeiros votos apurados";
+  else if (fv === lv) msg = "Se a apuração parasse agora, estaria empatado";
+  else msg = `Se a apuração parasse agora, ${nome(lider)} venceria`;
   set(v, msg);
   v.classList.toggle("win", !!eleito);
-
-  // Outros candidatos
-  const rest = all.filter(c => c.n !== FLAVIO && c.n !== LULA);
-  const box = $("others");
-  if (box.children.length !== rest.length) {
-    box.innerHTML = rest.map(() => `<div class="oc"><img alt="" loading="lazy"><span class="n"></span><span class="p num"></span></div>`).join("");
-  }
-  rest.forEach((c, i) => {
-    const el = box.children[i];
-    const img = el.querySelector("img");
-    if (img.getAttribute("src") !== foto(c.sqcand)) img.src = foto(c.sqcand);
-    el.querySelector(".n").textContent = nome(c);
-    el.title = `${nome(c)} · ${fmt(c.vap)} votos`;
-    set(el.querySelector(".p"), pct2(c.p) + "%");
-  });
+  v.title = nat.eleito ? "Confirmado pelo TSE"
+    : `Faltam apurar seções com ${fmt(nat.resta)} eleitores. Vantagem atual: ${fmt(d)} votos.`;
 }
 
 function updateUF(s, d) {
