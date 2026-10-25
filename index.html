@@ -353,6 +353,185 @@ function setHTML(el, html) {
   if (el.innerHTML !== html) el.innerHTML = html;
 }
 
+// Compartilhar placar: uma imagem no estilo do tema + link do site.
+// A imagem fica pronta de antemão (a cada atualização e troca de tema), porque o celular
+// só deixa abrir o menu de compartilhar logo depois do toque.
+const SITE = "https://jandelima.github.io/apuracao/";
+const EMOJI = { neutro: "🗳️", bolso: "💚💛", pt: "⭐" };
+const FONTE = `system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
+let placar = null, imagem = null;
+
+function textoPlacar() {
+  const { f, l, fv, lv, pst, hora, linha } = placar;
+  const nomes = [`Flávio ${pct2(f.p)}%`, `Lula ${pct2(l.p)}%`];
+  if (tema === "pt" || (tema === "neutro" && lv > fv)) nomes.reverse();   // o lado do tema (ou quem lidera) primeiro
+  return `${EMOJI[tema]} *Apuração Presidente · 2º turno*\n` +
+         `*${nomes.join(" × ")}*\n${linha}\n` +
+         `${pct2(pst)}% das seções apuradas · ${hora.slice(0, 5)}\n${SITE}`;
+}
+
+const FOTOS = {};
+function carregaFoto(sq) {
+  FOTOS[sq] ??= new Promise(ok => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";   // o TSE libera CORS nas fotos, então dá para desenhar no canvas
+    img.onload = () => ok(img);
+    img.onerror = () => ok(null);
+    // Endereço próprio: a cópia em cache da foto do placar veio sem CORS e estragaria o canvas
+    img.src = foto(sq) + "?canvas";
+  });
+  return FOTOS[sq];
+}
+
+// Desenho: retângulo arredondado, estrela, bandeira e texto que encolhe para caber
+function caixa(g, x, y, w, h, r) {
+  g.beginPath();
+  g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r);
+  g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
+}
+function estrela(g, cx, cy, R, rot = 0) {
+  g.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const r = i % 2 ? R * .382 : R, a = (rot - 90 + i * 36) * Math.PI / 180;
+    g.lineTo(cx + r * Math.cos(a), cy + r * Math.sin(a));
+  }
+  g.closePath(); g.fill();
+}
+function losango(g, cx, cy, w, op) {
+  const h = w * .7;
+  g.fillStyle = `rgba(255, 223, 0, ${op})`;
+  g.beginPath(); g.moveTo(cx - w / 2, cy); g.lineTo(cx, cy - h / 2); g.lineTo(cx + w / 2, cy); g.lineTo(cx, cy + h / 2); g.fill();
+  g.fillStyle = `rgba(0, 39, 118, ${op * 1.6})`;
+  g.beginPath(); g.arc(cx, cy, h * .3, 0, 7); g.fill();
+}
+function bandeira(g, x, y, w) {
+  const h = w * .7;
+  g.fillStyle = "#009c3b"; caixa(g, x, y, w, h, w * .04); g.fill();
+  g.fillStyle = "#ffdf00";
+  g.beginPath(); g.moveTo(x + w * .085, y + h / 2); g.lineTo(x + w / 2, y + h * .09); g.lineTo(x + w * .915, y + h / 2); g.lineTo(x + w / 2, y + h * .91); g.fill();
+  g.fillStyle = "#002776"; g.beginPath(); g.arc(x + w / 2, y + h / 2, h * .235, 0, 7); g.fill();
+  g.strokeStyle = "#fff"; g.lineWidth = w * .032;
+  g.beginPath(); g.moveTo(x + w * .337, y + h * .453); g.quadraticCurveTo(x + w / 2, y + h * .38, x + w * .663, y + h * .53); g.stroke();
+}
+function escreve(g, s, x, y, size, peso, cor, maxW = 0, align = "center") {
+  g.textAlign = align; g.fillStyle = cor;
+  do g.font = `${peso} ${size}px ${FONTE}`; while (maxW && g.measureText(s).width > maxW && --size > 12);
+  g.fillText(s, x, y);
+}
+
+async function gerarImagem() {
+  if (!placar) return;
+  const { f, l, fv, lv, tv, pst, hora, linha, eleito } = placar, t = tema;
+  const [ff, fl] = await Promise.all([carregaFoto(f.sqcand), carregaFoto(l.sqcand)]);
+  const W = 1080, H = 1350, c = document.createElement("canvas");
+  c.width = W; c.height = H;
+  const g = c.getContext("2d");
+
+  // Fundo do tema
+  const [c1, c2] = { neutro: ["#1d2738", "#0b0f16"], bolso: ["#00a83f", "#00692a"], pt: ["#d01b22", "#8a0d13"] }[t];
+  const bg = g.createLinearGradient(0, 0, W * .4, H);
+  bg.addColorStop(0, c1); bg.addColorStop(1, c2);
+  g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  if (t === "pt") {
+    g.fillStyle = "rgba(255, 255, 255, .12)";
+    for (let y = 0; y < H; y += 240) for (let x = 0; x < W; x += 240)
+      for (const [dx, dy, R, rot] of [[45, 52, 22, 0], [168, 36, 12, 20], [123, 138, 33, -12], [30, 192, 13, 15], [210, 183, 19, 8]])
+        estrela(g, x + dx, y + dy, R, rot);
+  } else if (t === "bolso") {
+    for (let y = 0; y < H; y += 270) for (let x = 0; x < W; x += 270) {
+      losango(g, x + 72, y + 78, 96, .22); losango(g, x + 207, y + 198, 69, .22);
+      g.fillStyle = "rgba(255, 255, 255, .5)";
+      for (const [dx, dy, R] of [[225, 52, 6], [45, 225, 5], [150, 142, 4.5]]) estrela(g, x + dx, y + dy, R);
+    }
+  } else {
+    for (const [x, cor] of [[0, "31, 95, 201"], [W, "212, 47, 47"]]) {
+      const r = g.createRadialGradient(x, 0, 0, x, 0, 700);
+      r.addColorStop(0, `rgba(${cor}, .45)`); r.addColorStop(1, `rgba(${cor}, 0)`);
+      g.fillStyle = r; g.fillRect(0, 0, W, H);
+    }
+  }
+  if (t !== "neutro") escreve(g, t === "pt" ? "13" : "22", W + 40, H + 110, 640, 900, "rgba(255, 255, 255, .10)", 0, "right");
+
+  // Topo: emblema, título e lema
+  const [hdBg, hdTx, hdSub] = { neutro: [null, "#fff", "rgba(255, 255, 255, .7)"], bolso: ["#ffdf00", "#002776", "#00752d"], pt: ["#fff", "#c4161c", "#8e0f14"] }[t];
+  let tx = 100;
+  if (hdBg) { g.fillStyle = hdBg; caixa(g, 60, 60, W - 120, 170, 32); g.fill(); }
+  if (t === "bolso") { bandeira(g, 100, 93, 150); tx = 285; }
+  if (t === "pt") { g.fillStyle = "#c4161c"; estrela(g, 165, 150, 80); escreve(g, "13", 165, 168, 44, 900, "#fff"); tx = 275; }
+  escreve(g, "Apuração · 2º turno", tx, 142, 62, 800, hdTx, W - 100 - tx, "left");
+  escreve(g, LEMAS[t] || "Presidente 2026", tx, 198, 34, 700, hdSub, W - 100 - tx, "left");
+
+  // Placar
+  g.fillStyle = "#fff"; caixa(g, 60, 270, W - 120, 880, 40); g.fill();
+  if (t !== "neutro") {
+    g.save(); caixa(g, 60, 270, W - 120, 880, 40); g.clip();
+    g.fillStyle = t === "pt" ? "#8e0f14" : "#ffdf00"; g.fillRect(60, 270, W - 120, 12);
+    g.restore();
+  }
+  for (const [img, cx, cor, nome, p, v] of [[ff, 300, "#1f5fc9", "Flávio Bolsonaro", f.p, fv], [fl, 780, "#d42f2f", "Lula", l.p, lv]]) {
+    g.save(); g.beginPath(); g.arc(cx, 440, 115, 0, 7); g.clip();
+    g.fillStyle = "#e7e9ef"; g.fillRect(cx - 115, 325, 230, 230);
+    if (img) { const k = Math.max(230 / img.width, 230 / img.height); g.drawImage(img, cx - img.width * k / 2, 325, img.width * k, img.height * k); }
+    g.restore();
+    g.strokeStyle = cor; g.lineWidth = 12; g.beginPath(); g.arc(cx, 440, 121, 0, 7); g.stroke();
+    escreve(g, nome, cx, 620, 40, 700, "#161a22", 440);
+    escreve(g, pct2(p) + "%", cx, 730, 104, 900, cor, 450);
+    escreve(g, fmt(v) + " votos", cx, 785, 32, 500, "#646c7d", 440);
+  }
+
+  // Barra em % do total: Flávio | brancos e nulos | Lula, com a marca de 50%
+  const bx = 110, bw = W - 220, by = 828, bh = 34;
+  g.save(); caixa(g, bx, by, bw, bh, 17); g.clip();
+  g.fillStyle = tv ? "#8a909c" : "#e7e9ef"; g.fillRect(bx, by, bw, bh);
+  if (tv) {
+    g.fillStyle = "#1f5fc9"; g.fillRect(bx, by, bw * fv / tv, bh);
+    g.fillStyle = "#d42f2f"; g.fillRect(bx + bw * (1 - lv / tv), by, bw * lv / tv, bh);
+  }
+  g.restore();
+  g.fillStyle = "#161a22"; g.fillRect(W / 2 - 2, by - 10, 4, bh + 20);
+  if (tv) escreve(g, `Brancos e nulos ${pct2((tv - fv - lv) / tv * 100)}%`, W / 2, 910, 28, 500, "#646c7d");
+
+  g.fillStyle = eleito ? "#d6f0e2" : "#eef0f4"; caixa(g, 110, 940, W - 220, 100, 24); g.fill();
+  escreve(g, linha, W / 2, 1004, 40, 800, "#161a22", W - 280);
+
+  escreve(g, "Seções apuradas", 110, 1098, 32, 500, "#161a22", 0, "left");
+  escreve(g, pct2(pst) + "%", W - 110, 1098, 40, 800, "#161a22", 0, "right");
+  g.fillStyle = "#e7e9ef"; caixa(g, 110, 1116, W - 220, 14, 7); g.fill();
+  if (pst > 0) { g.fillStyle = "#1f9d5c"; caixa(g, 110, 1116, Math.max(14, (W - 220) * pst / 100), 14, 7); g.fill(); }
+
+  // Rodapé
+  escreve(g, `Atualizado às ${hora.slice(0, 5)}`, W / 2, 1228, 34, 600, "rgba(255, 255, 255, .85)");
+  escreve(g, SITE.replace("https://", "").replace(/\/$/, ""), W / 2, 1290, 42, 800, "#fff");
+
+  const blob = await new Promise(ok => c.toBlob(ok, "image/png"));
+  if (blob) imagem = new File([blob], "placar-apuracao.png", { type: "image/png" });
+}
+
+function baixaImagem() {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(imagem);
+  a.download = imagem.name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+  const b = $("share"), txt = b.lastChild.textContent;
+  b.lastChild.textContent = " Imagem salva ✓";
+  setTimeout(() => { b.lastChild.textContent = txt; }, 2500);
+}
+
+$("share").addEventListener("click", async () => {
+  if (!placar) return;
+  const legenda = `${EMOJI[tema]} Apuração ao vivo · 2º turno\n${SITE}`;
+  if (imagem && navigator.canShare?.({ files: [imagem] })) {
+    try { await navigator.share({ files: [imagem], text: legenda }); } catch (e) { if (e.name !== "AbortError") baixaImagem(); }
+  } else if (navigator.share) {
+    try { await navigator.share({ text: textoPlacar() }); } catch (e) {}
+  } else if (imagem) {
+    baixaImagem();
+  } else {
+    window.open("https://wa.me/?text=" + encodeURIComponent(textoPlacar()), "_blank");
+  }
+});
+
 // Temas de torcida (só visual); a escolha fica salva no navegador
 const LEMAS = { neutro: "", bolso: "Brasil acima de tudo, Deus acima de todos", pt: "Faz o L!" };
 let tema = "neutro";
@@ -363,6 +542,7 @@ function aplicaTema() {
   else document.documentElement.dataset.tema = tema;
   $("lema").textContent = LEMAS[tema];
   document.querySelectorAll("#temas button").forEach(b => b.classList.toggle("on", b.dataset.t === tema));
+  gerarImagem();
 }
 $("temas").addEventListener("click", e => {
   const t = e.target.dataset?.t;
@@ -372,26 +552,6 @@ $("temas").addEventListener("click", e => {
   aplicaTema();
 });
 aplicaTema();
-
-// Compartilhar placar: menu de compartilhar do celular; sem ele, abre o WhatsApp
-const SITE = "https://jandelima.github.io/apuracao/";
-const EMOJI = { neutro: "🗳️", bolso: "💚💛", pt: "⭐" };
-let placar = null;
-function textoPlacar() {
-  const { f, l, fv, lv, pst, hora, linha } = placar;
-  const nomes = [`Flávio ${pct2(f.p)}%`, `Lula ${pct2(l.p)}%`];
-  if (tema === "pt" || (tema === "neutro" && lv > fv)) nomes.reverse();   // o lado do tema (ou quem lidera) primeiro
-  return `${EMOJI[tema]} *Apuração Presidente · 2º turno*\n` +
-         `*${nomes.join(" × ")}*\n${linha}\n` +
-         `${pct2(pst)}% das seções apuradas · ${hora.slice(0, 5)}\n${SITE}`;
-}
-$("share").addEventListener("click", async () => {
-  if (!placar) return;
-  const text = textoPlacar();
-  const whats = () => window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
-  if (!navigator.share) return whats();
-  try { await navigator.share({ text }); } catch (e) { if (e.name !== "AbortError") whats(); }
-});
 
 // Monta mapa e lista uma vez
 const map = $("map");
@@ -521,9 +681,10 @@ function updateBrasil(nat) {
   else msg = `Se a apuração parasse agora, ${nome(lider)} venceria`;
   set(v, msg);
   v.classList.toggle("win", !!eleito);
-  placar = { f, l, fv, lv, pst: nat.pst, hora: nat.hora,
+  placar = { f, l, fv, lv, tv, eleito, pst: nat.pst, hora: nat.hora,
              linha: eleito ? msg : fv === lv ? "Empate" : `${fv > lv ? "Flávio" : "Lula"} está ${fmt(d)} votos à frente` };
   $("share").disabled = fv + lv === 0;
+  gerarImagem();
   v.title = nat.eleito ? "Confirmado pelo TSE"
     : `Faltam apurar seções com ${fmt(nat.resta)} eleitores. Vantagem atual: ${fmt(d)} votos.`;
 }
