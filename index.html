@@ -245,7 +245,7 @@
         <div><div class="nm">Lula</div><div class="pct num" id="lp">—</div><div class="vt num" id="lv"></div></div>
       </div>
     </div>
-    <div class="split" id="split" title="Barra em % do total de votos: Flávio, brancos e nulos (cinza) e Lula. A marca no meio é 50%."><div id="fb" style="background:var(--flavio)"></div><div id="lb" style="background:var(--lula)"></div><span class="mid"></span></div>
+    <div class="split" id="split" title="Barra em % dos votos válidos, como os números acima. A marca no meio é 50%."><div id="fb" style="background:var(--flavio)"></div><div id="lb" style="background:var(--lula)"></div><span class="mid"></span></div>
     <div class="bn num" id="bn"></div>
     <div class="diff num" id="diff">&nbsp;</div>
     <div class="verdict" id="verdict">Carregando…</div>
@@ -479,13 +479,13 @@ async function gerarImagem() {
     escreve(g, fmt(v) + " votos", cx, 785, 32, 500, "#646c7d", 440);
   }
 
-  // Barra em % do total: Flávio | brancos e nulos | Lula, com a marca de 50%
+  // Barra em % dos válidos (igual aos números), com a marca de 50%; brancos e nulos embaixo
   const bx = 110, bw = W - 220, by = 828, bh = 34;
   g.save(); caixa(g, bx, by, bw, bh, 17); g.clip();
-  g.fillStyle = tv ? "#8a909c" : "#e7e9ef"; g.fillRect(bx, by, bw, bh);
-  if (tv) {
-    g.fillStyle = "#1f5fc9"; g.fillRect(bx, by, bw * fv / tv, bh);
-    g.fillStyle = "#d42f2f"; g.fillRect(bx + bw * (1 - lv / tv), by, bw * lv / tv, bh);
+  g.fillStyle = "#e7e9ef"; g.fillRect(bx, by, bw, bh);
+  if (fv + lv) {
+    g.fillStyle = "#1f5fc9"; g.fillRect(bx, by, bw * f.p / 100, bh);
+    g.fillStyle = "#d42f2f"; g.fillRect(bx + bw * (1 - l.p / 100), by, bw * l.p / 100, bh);
   }
   g.restore();
   g.fillStyle = "#161a22"; g.fillRect(W / 2 - 2, by - 10, 4, bh + 20);
@@ -650,11 +650,11 @@ function updateBrasil(nat) {
   set($("lp"), pct2(l.p) + "%");
   set($("fv"), fmt(fv) + " votos");
   set($("lv"), fmt(lv) + " votos");
-  // Barra em % do total de votos; o vão cinza entre as duas cores são brancos e nulos
+  // Barra em % dos válidos, igual aos números grandes: quem passa de 50% cruza a marca.
+  // Brancos e nulos (% do total de votos) ficam na linha de baixo.
   const tv = nat.tv;
-  $("fb").style.width = (tv ? fv / tv * 100 : 0) + "%";
-  $("lb").style.width = (tv ? lv / tv * 100 : 0) + "%";
-  $("split").style.background = tv ? "var(--other)" : "";
+  $("fb").style.width = f.p + "%";
+  $("lb").style.width = l.p + "%";
   setHTML($("bn"), tv ? `<i></i>Brancos e nulos ${pct2((tv - fv - lv) / tv * 100)}%` : "");
 
   // Diferença de votos entre os dois
