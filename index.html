@@ -118,6 +118,14 @@
   .fill i { height: 100%; width: 0; transition: width .8s ease; }
   .fill .f { background: var(--flavio); } .fill .o { background: var(--other); } .fill .l { background: var(--lula); }
   .ot { color: var(--other); font-weight: 600; }
+  /* Botão de compartilhar o placar */
+  .share { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; max-width: 360px; margin: 18px auto 0;
+           font: inherit; font-weight: 700; padding: 12px 16px; border-radius: 12px; border: none; cursor: pointer;
+           background: var(--text); color: var(--card); }
+  .share:disabled { opacity: .35; cursor: default; }
+  .share svg { width: 18px; height: 18px; }
+  [data-tema="bolso"] .share { background: #009c3b; color: #ffdf00; }
+  [data-tema="pt"] .share { background: #c4161c; color: #fff; }
   .bn { text-align: center; margin-top: 8px; font-size: 14px; color: var(--muted); }
   .bn i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--other); margin-right: 6px; }
 
@@ -245,6 +253,10 @@
       <div class="top"><span>Seções apuradas no Brasil</span><b class="num" id="np">—</b></div>
       <div class="bar"><div id="nb"></div></div>
     </div>
+    <button class="share" id="share" disabled>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+      Compartilhar placar
+    </button>
   </div>
 
   <div class="card">
@@ -360,6 +372,26 @@ $("temas").addEventListener("click", e => {
   aplicaTema();
 });
 aplicaTema();
+
+// Compartilhar placar: menu de compartilhar do celular; sem ele, abre o WhatsApp
+const SITE = "https://jandelima.github.io/apuracao/";
+const EMOJI = { neutro: "🗳️", bolso: "💚💛", pt: "⭐" };
+let placar = null;
+function textoPlacar() {
+  const { f, l, fv, lv, pst, hora, linha } = placar;
+  const nomes = [`Flávio ${pct2(f.p)}%`, `Lula ${pct2(l.p)}%`];
+  if (tema === "pt" || (tema === "neutro" && lv > fv)) nomes.reverse();   // o lado do tema (ou quem lidera) primeiro
+  return `${EMOJI[tema]} *Apuração Presidente · 2º turno*\n` +
+         `*${nomes.join(" × ")}*\n${linha}\n` +
+         `${pct2(pst)}% das seções apuradas · ${hora.slice(0, 5)}\n${SITE}`;
+}
+$("share").addEventListener("click", async () => {
+  if (!placar) return;
+  const text = textoPlacar();
+  const whats = () => window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
+  if (!navigator.share) return whats();
+  try { await navigator.share({ text }); } catch (e) { if (e.name !== "AbortError") whats(); }
+});
 
 // Monta mapa e lista uma vez
 const map = $("map");
@@ -489,6 +521,9 @@ function updateBrasil(nat) {
   else msg = `Se a apuração parasse agora, ${nome(lider)} venceria`;
   set(v, msg);
   v.classList.toggle("win", !!eleito);
+  placar = { f, l, fv, lv, pst: nat.pst, hora: nat.hora,
+             linha: eleito ? msg : fv === lv ? "Empate" : `${fv > lv ? "Flávio" : "Lula"} está ${fmt(d)} votos à frente` };
+  $("share").disabled = fv + lv === 0;
   v.title = nat.eleito ? "Confirmado pelo TSE"
     : `Faltam apurar seções com ${fmt(nat.resta)} eleitores. Vantagem atual: ${fmt(d)} votos.`;
 }
