@@ -113,10 +113,13 @@
 
   .bar { height: 12px; border-radius: 6px; background: var(--track); overflow: hidden; }
   .bar div { height: 100%; width: 0; background: var(--prog); transition: width .8s ease, background .8s; }
-  /* Barra dividida: comprimento = seções apuradas; cores = votos de Flávio e Lula */
+  /* Barra dividida: comprimento = seções apuradas; cores = % do total de votos de Flávio, brancos e nulos e Lula */
   .bar .fill { display: flex; gap: 2px; background: none; }
   .fill i { height: 100%; width: 0; transition: width .8s ease; }
-  .fill .f { background: var(--flavio); } .fill .l { background: var(--lula); }
+  .fill .f { background: var(--flavio); } .fill .o { background: var(--other); } .fill .l { background: var(--lula); }
+  .ot { color: var(--other); font-weight: 600; }
+  .bn { text-align: center; margin-top: 8px; font-size: 14px; color: var(--muted); }
+  .bn i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; background: var(--other); margin-right: 6px; }
 
   /* Regiões */
   .rg { display: grid; grid-template-columns: 120px minmax(0, 1fr) 84px 230px; grid-template-areas: "nm bar pc who";
@@ -234,7 +237,8 @@
         <div><div class="nm">Lula</div><div class="pct num" id="lp">—</div><div class="vt num" id="lv"></div></div>
       </div>
     </div>
-    <div class="split" title="Cada barra mostra a % dos votos válidos. A marca no meio é 50%."><div id="fb" style="background:var(--flavio)"></div><div id="lb" style="background:var(--lula)"></div><span class="mid"></span></div>
+    <div class="split" id="split" title="Barra em % do total de votos: Flávio, brancos e nulos (cinza) e Lula. A marca no meio é 50%."><div id="fb" style="background:var(--flavio)"></div><div id="lb" style="background:var(--lula)"></div><span class="mid"></span></div>
+    <div class="bn num" id="bn"></div>
     <div class="diff num" id="diff">&nbsp;</div>
     <div class="verdict" id="verdict">Carregando…</div>
     <div class="brasil">
@@ -268,7 +272,7 @@
           <button data-k="pct">% apurado</button>
         </div>
       </div>
-      <div class="key">Tamanho da barra = seções apuradas · cores = votos de <span class="fl">Flávio</span> e <span class="lu">Lula</span></div>
+      <div class="key">Tamanho da barra = seções apuradas · cores = votos de <span class="fl">Flávio</span>, <span class="ot">brancos e nulos</span> e <span class="lu">Lula</span></div>
       <div class="list" id="list"></div>
     </div>
   </div>
@@ -304,14 +308,16 @@ const foto = sq => `${BASE}/fotos/br/${sq}.jpeg`;
 const colorOf = n => n === FLAVIO ? "var(--flavio)" : n === LULA ? "var(--lula)" : "var(--other)";
 const versus = (f, l) => `<span class="fl">Flávio ${pct1(f)}%</span> <span class="x">×</span> <span class="lu">Lula ${pct1(l)}%</span>`;
 
-// Barra de estado/região: largura total = % apurado, dividida em Flávio | Lula
-const FILL = `<div class="bar"><div class="fill"><i class="f"></i><i class="l"></i></div></div>`;
+// Barra de estado/região: largura total = % apurado, dividida em Flávio | brancos e nulos | Lula
+// (fp e lp em % do total de votos; o resto é branco/nulo)
+const FILL = `<div class="bar"><div class="fill"><i class="f"></i><i class="o"></i><i class="l"></i></div></div>`;
 function setFill(el, apurado, fp, lp) {
   const fill = el.querySelector(".fill");
-  const [f, l] = fill.children;
+  const [f, o, l] = fill.children;
   fill.style.width = apurado + "%";
   f.style.width = fp + "%";
   l.style.width = lp + "%";
+  o.style.width = fp + lp > 0 ? Math.max(0, 100 - fp - lp) + "%" : "0";
 }
 
 // Estado em destaque no mapa (mouse ou toque) e linha de detalhes embaixo dele
@@ -426,18 +432,18 @@ function nacional(br) {
   const newest = [br, ...files].filter(Boolean).reduce((a, b) => stamp(b) > stamp(a) ? b : a);
   const hora = newest.hg;
 
-  const doBrasil = br && { all: cands(br).map(c => ({ ...c, vap: +c.vap, p: num(c.pvap) })), pst: num(br.s.pst), eleito, hora, resta: +br.e.esnt };
+  const doBrasil = br && { all: cands(br).map(c => ({ ...c, vap: +c.vap, p: num(c.pvap) })), pst: num(br.s.pst), eleito, hora, resta: +br.e.esnt, tv: +br.v.tv };
   if (files.every(Boolean)) {
-    let st = 0, ts = 0, vv = 0, resta = 0;
+    let st = 0, ts = 0, vv = 0, tv = 0, resta = 0;
     const votos = {};
     for (const d of files) {
-      st += +d.s.st; ts += +d.s.ts; vv += +d.v.vv; resta += +d.e.esnt;
+      st += +d.s.st; ts += +d.s.ts; vv += +d.v.vv; tv += +d.v.tv; resta += +d.e.esnt;
       for (const c of cands(d)) votos[c.n] = (votos[c.n] || 0) + +c.vap;
     }
     if (br && +br.s.st > st) return doBrasil;
     const all = cands(base).map(c => ({ ...c, vap: votos[c.n] || 0, p: vv ? (votos[c.n] || 0) / vv * 100 : 0 }))
                            .sort((a, b) => b.vap - a.vap);
-    return { all, pst: ts ? st / ts * 100 : 0, eleito, hora, resta };
+    return { all, pst: ts ? st / ts * 100 : 0, eleito, hora, resta, tv };
   }
   return doBrasil || null;
 }
@@ -452,8 +458,12 @@ function updateBrasil(nat) {
   set($("lp"), pct2(l.p) + "%");
   set($("fv"), fmt(fv) + " votos");
   set($("lv"), fmt(lv) + " votos");
-  $("fb").style.width = f.p + "%";
-  $("lb").style.width = l.p + "%";
+  // Barra em % do total de votos; o vão cinza entre as duas cores são brancos e nulos
+  const tv = nat.tv;
+  $("fb").style.width = (tv ? fv / tv * 100 : 0) + "%";
+  $("lb").style.width = (tv ? lv / tv * 100 : 0) + "%";
+  $("split").style.background = tv ? "var(--other)" : "";
+  setHTML($("bn"), tv ? `<i></i>Brancos e nulos ${pct2((tv - fv - lv) / tv * 100)}%` : "");
 
   // Diferença de votos entre os dois
   const d = Math.abs(fv - lv);
@@ -492,7 +502,8 @@ function updateUF(s, d) {
   const f = all.find(c => c.n === FLAVIO), l = all.find(c => c.n === LULA);
   const info = `${s.nome}: ${d.s.pst}% apurado` + (lead ? ` · Flávio ${f.pvap}% × Lula ${l.pvap}%` : "");
 
-  setFill(s.row, s.pct, lead ? num(f.pvap) : 0, lead ? num(l.pvap) : 0);
+  const tv = +d.v.tv;
+  setFill(s.row, s.pct, lead && tv ? +f.vap / tv * 100 : 0, lead && tv ? +l.vap / tv * 100 : 0);
   set(s.row.querySelector(".pc"), pct1(s.pct) + "%");
   s.row.classList.toggle("done", s.pct >= 100);
   s.row.title = info;
@@ -522,10 +533,10 @@ function updateRegioes() {
   REGIOES.forEach((r, i) => {
     const ss = UFS.filter(s => s.regiao === r);
     if (ss.some(s => !s.d)) return;   // ainda falta algum estado
-    let st = 0, ts = 0, vv = 0;
+    let st = 0, ts = 0, vv = 0, tv = 0;
     const votos = {};
     for (const { d } of ss) {
-      st += +d.s.st; ts += +d.s.ts; vv += +d.v.vv;
+      st += +d.s.st; ts += +d.s.ts; vv += +d.v.vv; tv += +d.v.tv;
       for (const c of cands(d)) votos[c.n] = (votos[c.n] || 0) + +c.vap;
     }
     const p = ts ? st / ts * 100 : 0;
@@ -533,7 +544,7 @@ function updateRegioes() {
     const hasVotes = vv > 0 && votos[lead] > 0;
 
     const el = box.children[i];
-    setFill(el, p, hasVotes ? (votos[FLAVIO] || 0) / vv * 100 : 0, hasVotes ? (votos[LULA] || 0) / vv * 100 : 0);
+    setFill(el, p, hasVotes ? (votos[FLAVIO] || 0) / tv * 100 : 0, hasVotes ? (votos[LULA] || 0) / tv * 100 : 0);
     set(el.querySelector(".pc"), pct2(p) + "%");
     el.title = `${fmt(st)} de ${fmt(ts)} seções apuradas`;
     setHTML(el.querySelector(".who"), hasVotes
